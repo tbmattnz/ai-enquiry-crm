@@ -1,0 +1,20 @@
+{
+  "name": "ai-enquiry-crm",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A human-reviewed enquiry-to-CRM portfolio demonstration.",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "test": "node --test",
+    "build": "node build.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  }
+}

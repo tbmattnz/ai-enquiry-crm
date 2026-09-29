@@ -11,4 +11,3 @@ jobs:
         with:
           node-version: '22'
       - run: node --test
-

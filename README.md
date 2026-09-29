@@ -66,7 +66,9 @@ flowchart LR
 
 | File                     | Responsibility                                                        |
 | ------------------------ | --------------------------------------------------------------------- |
-| `src/app.jsx`            | React interface, review flow and transport selection                  |
+| `src/app.jsx`            | Application state, workflow actions and transport selection           |
+| `src/ReviewPanel.jsx`    | Editable human review and approval states                             |
+| `src/Records.jsx`        | CRM table and activity log                                            |
 | `src/domain.mjs`         | Validation, draft lifecycle, contact matching and idempotent approval |
 | `src/extract.mjs`        | Deterministic sample extractor and optional Claude adapter            |
 | `src/server.mjs`         | Local HTTP API, request limits and same-origin checks                 |

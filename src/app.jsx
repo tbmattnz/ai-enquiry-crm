@@ -4,6 +4,8 @@ import { createService } from "./domain.mjs";
 import { sampleExtract } from "./extract.mjs";
 import { samples } from "./samples.mjs";
 import "./app.css";
+import { ReviewPanel } from "./ReviewPanel.jsx";
+import { Records } from "./Records.jsx";
 
 const serverMode = document.documentElement.dataset.runtime === "server";
 const local = createService(sampleExtract);
@@ -203,142 +205,25 @@ function App({ initialWorkspace, initialError }) {
               </button>
             </div>
           </div>
-          <div className="review panel">
-            <div className="panel-heading">
-              <div>
-                <p className="eyebrow">02 / HUMAN REVIEW</p>
-                <h2>
-                  {done ? "Recorded, with context." : "You have the final say."}
-                </h2>
-              </div>
-              <span className="review-symbol">{done ? "✓" : "✳"}</span>
-            </div>
-            {!fields ? (
-              <div className="empty-review">
-                <div className="empty-rule" />
-                <h3>
-                  Useful details.
-                  <br />
-                  No automatic decisions.
-                </h3>
-                <p>
-                  Extract an enquiry to see a proposed contact and request
-                  summary here. Nothing enters the CRM until you approve it.
-                </p>
-                <span className="annotation">A person stays in the loop.</span>
-              </div>
-            ) : (
-              <>
-                <div className="review-status" role="status">
-                  {done
-                    ? receipt.replayed
-                      ? "Retry recovered the original result. No duplicate write."
-                      : `Contact ${receipt.action}. Approval recorded.`
-                    : retry
-                      ? "Recover the saved result by retrying this review."
-                      : missing
-                        ? "Missing information — fill in the details before approval."
-                        : duplicate
-                          ? "Existing email found — approval will update this contact."
-                          : "New contact — check these details before approval."}
-                </div>
-                <div className="field-grid">
-                  {["name", "email", "company"].map((key) => (
-                    <label
-                      key={key}
-                      className={key === "company" ? "full" : ""}
-                    >
-                      {key === "email"
-                        ? "Email · required"
-                        : key[0].toUpperCase() + key.slice(1)}
-                      <input
-                        type={key === "email" ? "email" : "text"}
-                        value={fields[key]}
-                        placeholder={
-                          key === "email"
-                            ? "Add the missing email"
-                            : "Not provided"
-                        }
-                        maxLength={200}
-                        disabled={busy || done || retry}
-                        onChange={(e) =>
-                          setFields({ ...fields, [key]: e.target.value })
-                        }
-                      />
-                    </label>
-                  ))}
-                  <label className="full">
-                    Request summary · required
-                    <textarea
-                      value={fields.request}
-                      maxLength={2000}
-                      disabled={busy || done || retry}
-                      onChange={(e) =>
-                        setFields({ ...fields, request: e.target.value })
-                      }
-                    />
-                  </label>
-                </div>
-                {!done && (
-                  <div className="approval">
-                    <label className="check">
-                      <input
-                        type="checkbox"
-                        checked={simulate}
-                        disabled={busy || retry}
-                        onChange={(e) => setSimulate(e.target.checked)}
-                      />
-                      Test a lost response after saving
-                    </label>
-                    <button
-                      className="primary"
-                      onClick={approve}
-                      disabled={busy || missing}
-                    >
-                      {busy
-                        ? "Saving…"
-                        : retry
-                          ? "Retry approval safely"
-                          : duplicate
-                            ? "Approve & update contact"
-                            : "Approve & create contact"}{" "}
-                      <span>↗</span>
-                    </button>
-                    {retry && (
-                      <button
-                        className="text-button"
-                        disabled={busy}
-                        onClick={() => {
-                          setRetry(false);
-                          setError("");
-                        }}
-                      >
-                        Return to editing
-                      </button>
-                    )}
-                  </div>
-                )}
-                {done && (
-                  <div className="receipt">
-                    <span>✓</span>
-                    <p>
-                      <strong>{receipt.contact.email}</strong>
-                      <br />
-                      One approved enquiry. A traceable result.
-                    </p>
-                    <button
-                      className="text-button"
-                      onClick={() =>
-                        load((selection + 1 + samples.length) % samples.length)
-                      }
-                    >
-                      Try another →
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          <ReviewPanel
+            fields={fields}
+            receipt={receipt}
+            busy={busy}
+            missing={missing}
+            duplicate={duplicate}
+            retry={retry}
+            simulate={simulate}
+            onFieldsChange={setFields}
+            onSimulate={setSimulate}
+            onApprove={approve}
+            onEdit={() => {
+              setRetry(false);
+              setError("");
+            }}
+            onNext={() =>
+              load((selection + 1 + samples.length) % samples.length)
+            }
+          />
         </section>
         {error && (
           <div className="error" role="alert">
@@ -346,67 +231,7 @@ function App({ initialWorkspace, initialError }) {
             <p>{error}</p>
           </div>
         )}
-        <section className="records">
-          <div className="crm">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">03 / THE RESULT</p>
-                <h2>Your sample CRM</h2>
-              </div>
-              <span className="pill">{workspace.contacts.length} contacts</span>
-            </div>
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Contact</th>
-                    <th>Company</th>
-                    <th>Enquiries</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {workspace.contacts.map((contact) => (
-                    <tr key={contact.id}>
-                      <td>
-                        <strong>{contact.name || "Name not provided"}</strong>
-                        <span className="contact-email">{contact.email}</span>
-                      </td>
-                      <td>{contact.company || "—"}</td>
-                      <td>
-                        <span className="number">{contact.enquiries}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <aside className="activity">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">EVERY STEP, VISIBLE</p>
-                <h2>Activity</h2>
-              </div>
-              <span className="activity-icon">↳</span>
-            </div>
-            <ol aria-live="polite">
-              {workspace.events.slice(0, 6).map((event) => (
-                <li key={event.id} className={event.type}>
-                  <span className="event-dot" />
-                  <div>
-                    {event.message}
-                    <time>
-                      {new Date(event.at).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </time>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </aside>
-        </section>
+        <Records contacts={workspace.contacts} events={workspace.events} />
         <section className="about-demo">
           <p className="eyebrow">WHAT THIS DEMONSTRATES</p>
           <div>
